@@ -3,6 +3,9 @@ export class BaseStroke {
     this.strokeWeight = strokeWeightFunc;
     this.duration = duration;
     this.path = [];
+    this.loc;
+    this.pastStroke;
+    this.pastLoc;
   }
 
   update() {

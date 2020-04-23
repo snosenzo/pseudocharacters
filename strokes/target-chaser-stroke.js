@@ -1,50 +1,85 @@
 import { BaseStroke } from "./base";
 const p5 = require("p5");
+
 var colors2 = ["#f3320b", "#fbec64", "#fe9469", "#530aca"];
 var colors = ["#300a5c", "#f9a443", "#fed263", "#e0cbbc"];
+
+const NUM_STEPS_FOR_STROKE = 20;
 
 export class TargetChaserStroke extends BaseStroke {
   constructor(args) {
     super(args);
-    const { chaser, target } = args;
-    this.chaser = chaser;
-    this.target = target;
+    const { chaserProps, targetProps } = args;
+    this.path = [];
+    this.chaser = new Chaser(chaserProps);
+    this.target = new Target(targetProps);
+    this.numSteps = NUM_STEPS_FOR_STROKE;
+    this.loc = this.chaser.loc;
+    this.pastLoc = null;
+    this.pastStroke = 1;
   }
 
   update() {
+    // update particles guiding stroke
     this.chaser.seek(this.target.loc);
     this.chaser.update();
+    this.loc = this.chaser.loc;
     this.duration--;
   }
 
+  // use the movement of the chaser to draw the stroke
+  displayChaserStroke() {
+    const { chaser, duration, pastLoc, pastStroke, loc } = this;
+    const { maxSpeed, vel } = chaser;
+    const xVelNormalized = map(vel.x, -maxSpeed, maxSpeed, 0, 1);
+    stroke(lerpColor(color(colors[1]), color(colors[2]), xVelNormalized));
+    let strokeSize = getVelStrokeWeight(vel.mag());
+    // taper off stroke at the end
+    if (duration < 20) strokeSize *= duration / 20;
+    // strokeWeight(strokeSize);
+    let pathToAppend = [];
+    if (pastLoc) {
+      pathToAppend = lerpPointWithStroke(
+        pastLoc,
+        loc,
+        pastStroke,
+        strokeSize,
+        NUM_STEPS_FOR_STROKE,
+        ellipseStroke
+      );
+    }
+    this.pastStroke = strokeSize;
+    this.pastLoc = new createVector(loc.x, loc.y);
+    this.path = this.path.concat(pathToAppend);
+  }
+
   draw() {
-    this.path.push(...this.chaser.display(this.duration));
+    this.displayChaserStroke();
   }
 }
 
 export class Target {
-  constructor(loc) {
+  constructor({ loc }) {
     this.loc = loc;
-    this.gravConst = 1.0;
-    this.duration;
-    // fill(colors[0]);
-    // ellipse(loc.x, loc.y, 10, 10);
+  }
+
+  displayLoc() {
+    const { loc } = this;
+    point(loc.x, loc.y);
   }
 }
 
 export class Chaser {
-  constructor(loc, vel) {
-    this.loc = loc;
-    this.pastLoc = null;
-    this.pastStroke = 1;
-    this.vel = vel;
+  constructor({ initLoc, initVel }) {
+    this.loc = initLoc;
+    this.vel = initVel;
     this.acc = createVector(0, 0);
     this.maxForce = 0.6;
     this.maxSpeed = 10.0;
   }
 
   update() {
-    var { loc, vel, acc, maxSpeed, spacing, rotVel } = this;
+    var { loc, vel, acc, maxSpeed } = this;
     vel.add(acc);
     vel.limit(maxSpeed);
     loc.add(vel);
@@ -63,27 +98,21 @@ export class Chaser {
     acc.add(steer);
   }
 
-  display(duration) {
-    const { maxSpeed, loc, pastLoc, lastStroke, vel } = this;
-    const xVelNormalized = map(vel.x, -maxSpeed, maxSpeed, 0, 1);
-    stroke(lerpColor(color(colors[1]), color(colors[2]), xVelNormalized));
-    let strokeSize = getVelStrokeWeight(vel.mag());
-    if (duration < 20) strokeSize *= duration / 20;
-    // strokeWeight(strokeSize);
-    let pathReturn = [];
-    if (pastLoc) {
-      pathReturn = lerpPointWithStroke(
-        pastLoc,
-        loc,
-        lastStroke,
-        strokeSize,
-        20,
-        diagonalLineNoiseStroke
-      );
-    }
-    this.lastStroke = strokeSize;
-    this.pastLoc = new createVector(this.loc.x, this.loc.y);
-    return pathReturn;
+  displayLoc() {
+    const { loc } = this;
+    point(loc.x, loc.y);
+  }
+
+  displayVel() {
+    const { loc, vel } = this;
+    line(loc.x, loc.y, loc.x + vel.x, loc.y + vel.y);
+  }
+  // show point of chaser and velocity
+  display() {
+    stroke(0);
+    this.displayLoc();
+    stroke(255, 0, 0);
+    this.displayVel();
   }
 }
 
@@ -112,6 +141,7 @@ const diagonalLineNoiseStroke = (loc, strokeSize) => {
     loc.y - strokeSize
   );
 };
+
 const noneStroke = (loc, strokeSize) => {};
 
 const noiseLineStroke = (loc, strokeSize) => {
@@ -119,6 +149,7 @@ const noiseLineStroke = (loc, strokeSize) => {
   const yOffset = strokeSize * (-0.5 + noise(loc.y / 10.0));
   ellipse(loc.x + xOffset, loc.y + yOffset, strokeSize, strokeSize);
 };
+
 const lerpPointWithStroke = (
   startLoc,
   endLoc,
@@ -141,6 +172,6 @@ const lerpPointWithStroke = (
   return path;
 };
 
-const getVelStrokeWeight = velMag => {
-  return map(velMag * velMag, 0, 100, 10, 3);
+const getVelStrokeWeight = (velMag) => {
+  return map(velMag * velMag, 0, 100, 30, 12);
 };
