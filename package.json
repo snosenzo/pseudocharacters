@@ -1,10 +1,11 @@
 {
-  "name": "PseudoCharacters",
+  "name": "pseudocharacters",
   "version": "1.0.0",
   "description": "",
   "main": "pseudocharacter.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "canvas-sketch -o pseudocharacter.js"
   },
   "keywords": [],
   "author": "",
