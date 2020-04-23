@@ -1,6 +1,6 @@
 # pseudocharacters
 
-This project is an exploration of generatively creating asemic characters using [p5.js]("https://p5js.org/") and [canvas-sketch]("https://github.com/mattdesl/canvas-sketch/").
+This project is an exploration of generatively creating asemic characters using [p5.js](https://p5js.org/) and [canvas-sketch](https://github.com/mattdesl/canvas-sketch/).
 
 ## Concept
 
