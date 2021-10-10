@@ -1,5 +1,6 @@
 import { BaseStroke } from "./base";
 const p5 = require("p5");
+import { gui } from "../gui-settings";
 
 var colors2 = ["#f3320b", "#fbec64", "#fe9469", "#530aca"];
 var colors = ["#300a5c", "#f9a443", "#fed263", "#e0cbbc"];
@@ -45,7 +46,7 @@ export class TargetChaserStroke extends BaseStroke {
         pastStroke,
         strokeSize,
         NUM_STEPS_FOR_STROKE,
-        ellipseStroke
+        strokes[settings.strokeIndex]
       );
     }
     this.pastStroke = strokeSize;
@@ -175,3 +176,16 @@ const lerpPointWithStroke = (
 const getVelStrokeWeight = (velMag) => {
   return map(velMag * velMag, 0, 100, 30, 12);
 };
+
+const strokes = [
+  noiseLineStroke,
+  diagonalLineNoiseStroke,
+  diagonalLineStroke,
+  ellipseStroke,
+  rectStroke,
+];
+const settings = {
+  strokeIndex: 0,
+};
+const folder = gui.addFolder("stroke properties");
+folder.add(settings, "strokeIndex", 0, strokes.length - 1, 1);

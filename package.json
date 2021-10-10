@@ -5,13 +5,15 @@
   "main": "pseudocharacter.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "canvas-sketch -o pseudocharacter.js"
+    "dev": "canvas-sketch -o pseudocharacter.js --hot",
+    "start": "canvas-sketch -o pseudocharacter.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "canvas-sketch": "^0.6.1",
+    "dat.gui": "^0.7.7",
     "p5": "^0.9.0"
   }
 }

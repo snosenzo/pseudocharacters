@@ -1,5 +1,10 @@
-import { TargetChaserStroke } from "./strokes/target-chaser-stroke";
+import { TargetChaserStroke } from './strokes/target-chaser-stroke';
 
+/* A Character variation is based off of strokes from a grid
+ * The character initiates a stroke by creating an agent that traverses the grid from one point to another
+ * In this case, the stroke created starts at a point in the grid, and steers toward anothe point in the grid in to create the stroke.
+ *
+ */
 export class Character {
   constructor({ numStrokes, sizeX, sizeY, xGrid, yGrid }) {
     this.numStrokes = numStrokes;
@@ -84,5 +89,17 @@ export class Character {
       this.currentStroke.update();
       this.currentStroke.draw();
     }
+  }
+  debugLines() {
+    strokeWeight(1);
+    stroke(0);
+    noFill();
+    this.paths.forEach((path) => {
+      beginShape();
+      path.forEach((pt) => {
+        vertex(pt.x, pt.y);
+      });
+      endShape();
+    });
   }
 }

@@ -2,6 +2,7 @@ const canvasSketch = require("canvas-sketch");
 const p5 = require("p5");
 import { sqGridPaddingCallback } from "./utils/formatting-callbacks";
 import { Character } from "./character";
+import { gui } from "./gui-settings";
 new p5();
 var character = null;
 var currentCharLoc = null;
@@ -9,6 +10,14 @@ var currentCharLoc = null;
 var colors2 = ["#f3320b", "#fbec64", "#fe9469", "#530aca"];
 
 var colors = ["#300a5c", "#f9a443", "#fed263", "#e0cbbc"];
+
+const guiSettings = {
+  debugLines: false,
+  drawChars: true,
+};
+const folder = gui.addFolder("General");
+folder.add(guiSettings, "debugLines");
+folder.add(guiSettings, "drawChars");
 
 var characterParams = {
   numStrokes: 5,
@@ -25,19 +34,12 @@ const settings = {
   animate: true,
 };
 
-let drawChars = false;
+let charParams = [];
 const sketch = (sketchContext) => {
   const { play, stop, pause, render } = sketchContext;
   setup();
   window.addEventListener("keydown", (event) => {
     const { key } = event;
-    if (key == "d") {
-      drawChars = !drawChars;
-      setup();
-      stop();
-      play();
-      render();
-    }
     if (key == "s") {
       saveCanvas(new Date().getTime() + "pseudochars", "png");
     }
@@ -49,8 +51,9 @@ const sketch = (sketchContext) => {
     }
   });
   return ({ width, height }) => {
-    if (drawChars) {
-      drawCharacters(sketchContext);
+    if (guiSettings.drawChars) {
+      drawCharactersFromGrid();
+      // drawCharacters(sketchContext);
     } else {
       printGrid(sketchContext);
       sketchContext.stop();
@@ -62,7 +65,7 @@ function setup() {
   // put setup code here
   background(255);
   // noFill();
-  character = new Character(characterParams);
+  charParams = getGridCharParams();
   // currentCharLoc = createVector(characterParams.sizeX, characterParams.sizeY);
   currentCharLoc = createVector(
     characterParams.sizeX * 0.5,
@@ -71,6 +74,29 @@ function setup() {
   smooth();
 }
 
+function drawCharactersFromGrid(sketchContext) {
+  if (charParams.length === 0) {
+    return;
+  }
+  if (!charParams[0].character) {
+    charParams[0].character = new Character(charParams[0].currParams);
+  }
+  const curr = charParams[0];
+  applyMatrix();
+  translate(...curr.translation);
+  curr.character.draw();
+  if (settings.debugLines) {
+    curr.character.debugLines();
+  }
+
+  resetMatrix();
+  if (curr.character.done) {
+    charParams.shift();
+  }
+  if (charParams.length === 0) {
+    sketchContext.pause();
+  }
+}
 function drawCharacters(sketchContext) {
   applyMatrix();
   translate(currentCharLoc.x, currentCharLoc.y);
@@ -78,20 +104,22 @@ function drawCharacters(sketchContext) {
   strokeWeight(1);
   smooth();
   stroke(0);
-  character.paths.forEach((path) => {
-    noFill();
-    beginShape();
-    path.forEach((pt) => {
-      vertex(pt.x, pt.y);
+  if (guiSettings.debugLines) {
+    character.paths.forEach((path) => {
+      noFill();
+      beginShape();
+      path.forEach((pt) => {
+        vertex(pt.x, pt.y);
+      });
+      endShape();
     });
-    endShape();
-  });
+  }
   if (character.done) {
     characterParams.numStrokes = Math.floor(random(3, 5));
     character = new Character(characterParams);
     currentCharLoc.x += characterParams.sizeX * 1.5;
     if (currentCharLoc.x + characterParams.sizeX * 0.5 > width) {
-      currentCharLoc.x = characterParams.sizeX;
+      currentCharLoc.x = characterParams.sizeX * 0.5;
       currentCharLoc.y += characterParams.sizeY * 1.5;
       if (currentCharLoc.y > height - characterParams.sizeY) {
         sketchContext.pause();
@@ -101,13 +129,34 @@ function drawCharacters(sketchContext) {
   }
 }
 
+const getGridCharParams = () => {
+  const charParams = [];
+  const padding = 150;
+  sqGridPaddingCallback(
+    0,
+    0,
+    2500,
+    5,
+    padding
+  )((gridX, gridY, sizeX, sizeY) => {
+    const currParams = {
+      ...characterParams,
+      sizeX,
+      sizeY,
+    };
+    const translation = [gridX - padding * 0.5, gridY - padding * 0.5];
+    charParams.push({ translation, currParams });
+  });
+  return charParams;
+};
+
 const printGrid = () => {
   const padding = 150;
   sqGridPaddingCallback(
     0,
     0,
     2500,
-    10,
+    5,
     padding
   )((gridX, gridY, sizeX, sizeY) => {
     applyMatrix();
